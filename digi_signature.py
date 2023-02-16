@@ -37,6 +37,19 @@ def parameter_generation():
     print("g:",g)
     return(p,q,g)
 
+def pad_message(msg, block_size):
+    # Padding can be used to ensure message integrity. For example, in the case of hashing algorithms, 
+    # a specific padding scheme is used to ensure that a small change in the input message produces a large 
+    # change in the hash output. This makes it difficult for an attacker to modify the message without 
+    # changing the hash value.
+
+    # Determine number of padding bytes required
+    num_bytes = block_size - (len(msg) % block_size)
+    print("num_bytes:",type(num_bytes))
+    # Pad message with null bytes
+    padded_msg = msg + str(b'\0' * num_bytes)
+    return padded_msg
+
 def per_user_key(p,q,g):
     # User private key:
     x = secrets.randbelow(q-1)
@@ -49,7 +62,8 @@ def per_user_key(p,q,g):
 def signature(name,p,q,g,x):
     with open(name) as file:
         text=file.read()
-        hash_component = sha256(text.encode("UTF-8")).hexdigest()
+        padded_msg = pad_message(text, 128)
+        hash_component = sha256(padded_msg.encode("UTF-8")).hexdigest()
         print("Hash of document sent: ",hash_component)
     r,s=0,0
     while(s==0 or r==0):
@@ -65,7 +79,8 @@ def signature(name,p,q,g,x):
 def verification(name,p,q,g,r,s,y):
     with open(name) as file:
         text=file.read()
-        hash_component = sha256(text.encode("UTF-8")).hexdigest()
+        padded_msg = pad_message(text, 128)
+        hash_component = sha256(padded_msg.encode("UTF-8")).hexdigest()
         print("Hash of document received: ",hash_component)
     w=mod_inverse(s,q)
     print("Value of w is : ",w)
